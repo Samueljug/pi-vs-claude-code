@@ -677,7 +677,12 @@ export default function (pi: ExtensionAPI) {
 			pi.sendMessage(
 				{
 					customType: "coms-net-inbound",
-					content: `[from ${senderName} @ ${senderCwd}]\n\n${promptText}`,
+					content:
+						`[inbound coms-net message from ${senderName} @ ${senderCwd}]\n` +
+						`[reply by writing a normal assistant message — your turn output is auto-returned to ${senderName}. ` +
+						`DO NOT call coms_net_send/coms_net_await/coms_net_get to reply; that creates a ping-pong loop. ` +
+						`msg_id ${msg_id} belongs to ${senderName}'s outbound, not yours.]\n\n` +
+						`${promptText}`,
 					display: true,
 					details: {
 						msg_id,
@@ -1180,8 +1185,16 @@ export default function (pi: ExtensionAPI) {
 		name: "coms_net_send",
 		label: "Coms Net Send",
 		description:
-			"Send a prompt to a peer agent through the coms-net hub. Returns synchronously with a msg_id once the server queues the prompt. " +
-			"Use coms_net_get (non-blocking) or coms_net_await (blocking) with the msg_id to retrieve the response.",
+			"INITIATE a new outbound message to a peer agent on the coms-net hub. " +
+			"Returns synchronously with a msg_id once the server queues the prompt. " +
+			"Use coms_net_get (non-blocking) or coms_net_await (blocking) with that msg_id to retrieve the peer's reply.\n\n" +
+			"⚠️  DO NOT call this tool to REPLY to an inbound message. " +
+			"When you receive a `[from <peer>] …` follow-up, just write your answer as your normal assistant message — " +
+			"the coms-net extension automatically captures the final assistant text at the end of your turn and " +
+			"submits it back to the original caller. Calling coms_net_send in response creates an infinite ping-pong loop.\n\n" +
+			"Only valid uses: (a) you, the user, or your task explicitly ask to start a new conversation with a peer; " +
+			"(b) you are forwarding/delegating to a *different* peer than the one whose prompt you are currently answering; " +
+			"in that case `hops` is auto-incremented and the hop limit will eventually stop runaway chains.",
 		parameters: Type.Object({
 			target: Type.String({ description: "Peer name (preferred, scoped to your project) or session_id." }),
 			prompt: Type.String({ description: "The prompt to send." }),
@@ -1286,7 +1299,9 @@ export default function (pi: ExtensionAPI) {
 		name: "coms_net_get",
 		label: "Coms Net Get",
 		description:
-			"Non-blocking poll of a pending coms_net_send reply. Returns status pending|complete|error and (when complete) the response.",
+			"Non-blocking poll of a reply to YOUR OWN coms_net_send. Returns status pending|complete|error and (when complete) the response. " +
+			"Same caveat as coms_net_await: only use msg_ids you got back from coms_net_send, never msg_ids from an inbound `[from <peer>] …` prompt — " +
+			"those belong to the peer, and replying to them happens automatically via your normal assistant message at end of turn.",
 		parameters: Type.Object({
 			msg_id: Type.String({ description: "msg_id returned by coms_net_send." }),
 		}),
@@ -1356,7 +1371,11 @@ export default function (pi: ExtensionAPI) {
 		name: "coms_net_await",
 		label: "Coms Net Await",
 		description:
-			"Block until a pending coms_net_send reply lands or the timeout fires. Default timeout 30 minutes.",
+			"Block until the reply to YOUR OWN outbound coms_net_send arrives, or the timeout fires (default 30 min). " +
+			"Only call this with a msg_id that YOU received as the return value of a coms_net_send call you just made.\n\n" +
+			"⚠️  Do NOT call this with a msg_id that came in via an inbound `[from <peer>] …` prompt — those msg_ids belong to the *peer's* outbound, not yours. " +
+			"To reply to an inbound message, do nothing special: just answer normally as your assistant message, " +
+			"and the extension will auto-submit your final text back to the caller when your turn ends.",
 		parameters: Type.Object({
 			msg_id: Type.String({ description: "msg_id returned by coms_net_send." }),
 			timeout_ms: Type.Optional(Type.Number({ description: "Override the default timeout (ms). Server cap applies." })),
