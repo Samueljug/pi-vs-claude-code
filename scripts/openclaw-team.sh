@@ -3,7 +3,7 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 MODEL_PRESET_DIR="${OPENCLAW_PI_MODEL_PRESET_DIR:-$ROOT/.pi/openclaw-teams/model-presets}"
-OPENCLAW_PI_MODEL_PRESET="${OPENCLAW_PI_MODEL_PRESET:-codex-default}"
+OPENCLAW_PI_MODEL_PRESET="${OPENCLAW_PI_MODEL_PRESET:-gemini-default}"
 PI_VISIBLE="${OPENCLAW_PI_VISIBLE:-$HOME/.openclaw/workspace/bin/pi-visible}"
 LAUNCH_MODE="${OPENCLAW_PI_LAUNCH_MODE:-background}"
 WEBWRIGHT_ROOT="${OPENCLAW_WEBWRIGHT_ROOT:-$HOME/.openclaw/workspace/tools/webwright}"
