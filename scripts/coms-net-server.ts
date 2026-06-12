@@ -588,14 +588,14 @@ async function handleRegister(req: Request): Promise<Response> {
 	broadcast(
 		p,
 		"agent_joined",
-			{ project: projectName, agent: entryToCard(entry, p) },
+		{ project: projectName, agent: entryToCard(entry, p) },
 		body.session_id,
 	);
 
 	const sse_url = `/v1/events?project=${encodeURIComponent(projectName)}&session_id=${encodeURIComponent(body.session_id)}`;
 	const resp: RegisterResponse = {
 		ok: true,
-			agent: entryToCard(entry, p),
+		agent: entryToCard(entry, p),
 		heartbeat_interval_ms: HEARTBEAT_MS,
 		sse_url,
 	};
@@ -671,7 +671,7 @@ function handleEvents(req: Request, url: URL): Response {
 			for (const a of p.agents.values()) {
 				if (a.session_id === session_id) continue;
 				if (a.explicit) continue;
-					agents.push(entryToCard(a, p));
+				agents.push(entryToCard(a, p));
 			}
 			const snapId = ++writer.lastId;
 			try {
@@ -791,12 +791,12 @@ async function handleHeartbeat(
 				project: projectName,
 				agent: {
 					session_id: entry.session_id,
-						name: entry.name,
-						context_used_pct: entry.context_used_pct,
-						queue_depth: Math.max(entry.queue_depth, inboxDepthFor(p, entry.session_id)),
-						model: entry.model,
-						status: entry.status,
-					},
+					name: entry.name,
+					context_used_pct: entry.context_used_pct,
+					queue_depth: Math.max(entry.queue_depth, inboxDepthFor(p, entry.session_id)),
+					model: entry.model,
+					status: entry.status,
+				},
 			},
 			sessionId,
 		);
