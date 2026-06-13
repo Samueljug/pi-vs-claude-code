@@ -1,9 +1,20 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# INCIDENT GUARD (2026-06-13): never pipe a pi agent's interactive TUI to a log
+# file (e.g. `tmux pipe-pane` to ~/.openclaw/logs/pi-team-*/<agent>.log, or
+# `pi ... | tee file`). The TUI re-renders continuously, so a non-TTY sink
+# captures every frame and grows without bound — this filled the root disk to
+# 100% and ENOSPC-crashed the whole team (self-improvement-lead.log alone hit
+# 68GB in ~2.5h). The mineable record already exists as structured JSONL under
+# ~/.pi/agent/sessions/ (pi --session-dir); use that for observability. If you
+# must capture human-readable per-agent logs, strip ANSI and size-cap them; the
+# improver monitor (dark-factory-improver-monitor / 30-min cron) caps
+# any log over 500MB as a backstop and pages Telegram on disk/log/team-down.
+
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 MODEL_PRESET_DIR="${OPENCLAW_PI_MODEL_PRESET_DIR:-$ROOT/.pi/openclaw-teams/model-presets}"
-OPENCLAW_PI_MODEL_PRESET="${OPENCLAW_PI_MODEL_PRESET:-gemini-default}"
+OPENCLAW_PI_MODEL_PRESET="${OPENCLAW_PI_MODEL_PRESET:-codex-default}"
 PI_VISIBLE="${OPENCLAW_PI_VISIBLE:-$HOME/.openclaw/workspace/bin/pi-visible}"
 LAUNCH_MODE="${OPENCLAW_PI_LAUNCH_MODE:-background}"
 WEBWRIGHT_ROOT="${OPENCLAW_WEBWRIGHT_ROOT:-$HOME/.openclaw/workspace/tools/webwright}"
